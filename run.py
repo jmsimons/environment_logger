@@ -3,13 +3,13 @@
 """Run the climate logger from the project root."""
 
 import argparse
-import logging
 import signal
 import threading
 from pathlib import Path
 
-from src import ClimateLogger, create_app
+from src import ClimateLogger
 from src.main import DEFAULT_LOG_PATH, SAMPLE_INTERVAL_SECONDS
+from src.webapp import app
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,13 +24,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s %(message)s",
-    )
 
     print(f"Logging to {args.log_file}")
     climate_logger = ClimateLogger(args.log_file)
+    app.config["CLIMATE_LOGGER"] = climate_logger
     sampler = threading.Thread(
         target=climate_logger.run,
         name="am2302-sampler",
@@ -47,7 +44,7 @@ def main() -> None:
 
     try:
         print("Starting climate logger web server...")
-        create_app(climate_logger).run(
+        app.run(
             host=args.host,
             port=args.port,
             debug=False,

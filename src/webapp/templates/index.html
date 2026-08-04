@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="30">
+    <title>Climate Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<main>
+    <h1>AM2302 · GPIO {{ gpio }} · ONE-MINUTE AVERAGE</h1>
+    {% if average %}
+        <section class="readings">
+            <div class="reading"><span class="value">{{ "%.1f"|format(average.temperature_f) }}°</span><span class="label">Fahrenheit</span></div>
+            <div class="reading"><span class="value">{{ "%.1f"|format(average.humidity_percent) }}%</span><span class="label">Relative humidity</span></div>
+        </section>
+        <footer>
+            {{ average.temperature_c|round(1) }} °C · {{ average.sample_count }} samples<br>
+            Minute ending {{ average.timestamp_utc }} UTC
+        </footer>
+    {% else %}
+        <p>Collecting the first minute of samples...</p>
+    {% endif %}
+</main>
+</body>
+</html>
