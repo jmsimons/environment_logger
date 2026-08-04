@@ -9,6 +9,14 @@ const humidityPercent = document.querySelector("#humidity-percent");
 const temperatureC = document.querySelector("#temperature-c");
 const sampleCount = document.querySelector("#sample-count");
 const timestampUtc = document.querySelector("#timestamp-utc");
+const weatherStatus = document.querySelector("#weather-status");
+const weatherReadings = document.querySelector("#weather-readings");
+const weatherDetails = document.querySelector("#weather-details");
+const outdoorTemperatureF = document.querySelector("#outdoor-temperature-f");
+const outdoorHumidityPercent = document.querySelector("#outdoor-humidity-percent");
+const outdoorTemperatureC = document.querySelector("#outdoor-temperature-c");
+const outdoorTimestampUtc = document.querySelector("#outdoor-timestamp-utc");
+const weatherDescription = document.querySelector("#weather-description");
 
 let requestInFlight = false;
 
@@ -22,6 +30,27 @@ function showAverage(average) {
     status.hidden = true;
     readings.hidden = false;
     details.hidden = false;
+
+    showWeather(average);
+}
+
+function showWeather(average) {
+    if (average.outdoor_temperature_f === null) {
+        weatherStatus.hidden = false;
+        weatherReadings.hidden = true;
+        weatherDetails.hidden = true;
+        return;
+    }
+
+    outdoorTemperatureF.textContent = `${Number(average.outdoor_temperature_f).toFixed(1)}°`;
+    outdoorHumidityPercent.textContent = `${Number(average.outdoor_humidity_percent).toFixed(1)}%`;
+    outdoorTemperatureC.textContent = `${Number(average.outdoor_temperature_c).toFixed(1)} °C`;
+    outdoorTimestampUtc.textContent = `${average.outdoor_timestamp_utc} UTC`;
+    weatherDescription.textContent = average.outdoor_description;
+
+    weatherStatus.hidden = true;
+    weatherReadings.hidden = false;
+    weatherDetails.hidden = false;
 }
 
 async function pollAverage() {

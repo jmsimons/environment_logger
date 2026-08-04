@@ -24,6 +24,8 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from .weather import WeatherClient, WeatherReading
+
 
 SENSOR_GPIO = 4
 SAMPLE_INTERVAL_SECONDS = 5.0
@@ -39,13 +41,25 @@ class ClimateAverage:
     temperature_f: float
     humidity_percent: float
     sample_count: int
+    outdoor_timestamp_utc: str | None
+    outdoor_temperature_c: float | None
+    outdoor_temperature_f: float | None
+    outdoor_humidity_percent: float | None
+    outdoor_weather_code: int | None
+    outdoor_description: str | None
 
 
 class ClimateLogger:
     """Sample an AM2302 and persist one average for each completed minute."""
 
-    def __init__(self, log_path: Path) -> None:
+    def __init__(
+        self,
+        log_path: Path,
+        weather_client: WeatherClient | None = None,
+    ) -> None:
         self.log_path = log_path
+        self.weather_client = weather_client or WeatherClient()
+        self.latest_weather: WeatherReading | None = None
         try:
             adafruit_dht = import_module("adafruit_dht")
             board = import_module("board")
@@ -82,7 +96,12 @@ class ClimateLogger:
             now = time.monotonic()
             if now >= interval_end:
                 if temperatures and humidities:
-                    average = self._build_average(temperatures, humidities)
+                    weather = self._fetch_weather()
+                    average = self._build_average(
+                        temperatures,
+                        humidities,
+                        weather,
+                    )
                     self._append_average(average)
                     with self.lock:
                         self.latest_average = average
@@ -92,6 +111,13 @@ class ClimateLogger:
                         average.humidity_percent,
                         average.sample_count,
                     )
+                    if weather is not None:
+                        logging.info(
+                            "Local weather: %.1f F, %.1f%% RH, %s",
+                            weather.temperature_f,
+                            weather.humidity_percent,
+                            weather.description,
+                        )
                 else:
                     logging.warning("No valid AM2302 samples collected this minute")
 
@@ -117,9 +143,18 @@ class ClimateLogger:
         self.stop()
         self.sensor.exit()
 
+    def _fetch_weather(self) -> WeatherReading | None:
+        try:
+            self.latest_weather = self.weather_client.fetch()
+        except Exception as error:
+            logging.warning("Unable to fetch local weather: %s", error)
+        return self.latest_weather
+
     @staticmethod
     def _build_average(
-        temperatures: list[float], humidities: list[float]
+        temperatures: list[float],
+        humidities: list[float],
+        weather: WeatherReading | None = None,
     ) -> ClimateAverage:
         temperature_c = sum(temperatures) / len(temperatures)
         humidity_percent = sum(humidities) / len(humidities)
@@ -129,13 +164,37 @@ class ClimateLogger:
             temperature_f=(temperature_c * 9.0 / 5.0) + 32.0,
             humidity_percent=humidity_percent,
             sample_count=len(temperatures),
+            outdoor_timestamp_utc=(weather.timestamp_utc if weather else None),
+            outdoor_temperature_c=(weather.temperature_c if weather else None),
+            outdoor_temperature_f=(weather.temperature_f if weather else None),
+            outdoor_humidity_percent=(weather.humidity_percent if weather else None),
+            outdoor_weather_code=(weather.weather_code if weather else None),
+            outdoor_description=(weather.description if weather else None),
         )
 
     def _append_average(self, average: ClimateAverage) -> None:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         write_header = not self.log_path.exists() or self.log_path.stat().st_size == 0
+        fieldnames = list(asdict(average))
+        if not write_header:
+            self._upgrade_log_schema(fieldnames)
         with self.log_path.open("a", newline="", encoding="utf-8") as log_file:
-            writer = csv.DictWriter(log_file, fieldnames=asdict(average).keys())
+            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
             if write_header:
                 writer.writeheader()
             writer.writerow(asdict(average))
+
+    def _upgrade_log_schema(self, fieldnames: list[str]) -> None:
+        with self.log_path.open(newline="", encoding="utf-8") as log_file:
+            reader = csv.DictReader(log_file)
+            if reader.fieldnames == fieldnames:
+                return
+            rows = list(reader)
+
+        temporary_path = self.log_path.with_suffix(f"{self.log_path.suffix}.tmp")
+        with temporary_path.open("w", newline="", encoding="utf-8") as log_file:
+            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow({field: row.get(field, "") for field in fieldnames})
+        temporary_path.replace(self.log_path)

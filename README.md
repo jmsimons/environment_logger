@@ -2,7 +2,14 @@
 
 Reads an AM2302/DHT22 sensor every five seconds, retrying failed readings every
 two seconds, records a non-overlapping one-minute temperature and humidity
-average in CSV, and serves the latest average through Flask.
+average in CSV, adds current local weather, and serves the latest record through
+Flask.
+
+Local weather comes from Open-Meteo for `32.924637745862825,
+-117.16058117149171`. The application fetches current outdoor temperature,
+humidity, and conditions when each one-minute sensor average is completed. If a
+request fails, the most recent successful weather observation is reused so
+indoor logging continues.
 
 ## Wiring
 
@@ -42,8 +49,27 @@ available after one minute of valid samples.
 
 By default, averages are appended to `src/climate_log.csv`, while runtime events
 and sensor errors are appended to `src/climate_logger.log` and still printed to
-the console. Override the web listener or readings path as needed:
+the console. Each CSV and API record includes indoor readings plus outdoor
+temperature, humidity, condition, and observation time. Override the web
+listener or readings path as needed:
 
 ```bash
 python3 run.py --host 0.0.0.0 --port 8080 --log-file /var/lib/climate_logger/climate.csv
+```
+
+## Start on boot
+
+From the project directory on the Raspberry Pi, register and start the systemd
+service with the virtual environment's Python interpreter:
+
+```bash
+sudo env/bin/python setup.py
+```
+
+The installer writes `environment-logger.service`, enables it at boot, and
+starts it immediately. Inspect the service or follow its output with:
+
+```bash
+systemctl status environment-logger.service
+journalctl -u environment-logger.service -f
 ```

@@ -24,6 +24,12 @@ h1 {
     letter-spacing: 0;
 }
 
+h2 {
+    margin: 0 0 1rem;
+    font: 600 .9rem/1 sans-serif;
+    letter-spacing: 0;
+}
+
 .readings {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -42,7 +48,8 @@ h1 {
 }
 
 .label,
-footer {
+footer,
+.details {
     color: #aebbb3;
 }
 
@@ -51,10 +58,25 @@ footer {
     margin-top: .75rem;
 }
 
-footer {
+footer,
+.details {
     margin-top: 1.5rem;
     font-size: .8rem;
     line-height: 1.6;
+}
+
+.weather {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #54635b;
+}
+
+.weather .details {
+    margin-bottom: 0;
+}
+
+a {
+    color: inherit;
 }
 
 @media (max-width: 32rem) {

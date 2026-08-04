@@ -20,6 +20,19 @@
         <span id="sample-count">{% if average %}{{ average.sample_count }} samples{% endif %}</span><br>
         Minute ending <span id="timestamp-utc">{% if average %}{{ average.timestamp_utc }} UTC{% endif %}</span>
     </footer>
+    <section class="weather">
+        <h2>LOCAL WEATHER</h2>
+        <p id="weather-status"{% if average and average.outdoor_temperature_f is not none %} hidden{% endif %}>Local weather unavailable.</p>
+        <div id="weather-readings" class="readings"{% if not average or average.outdoor_temperature_f is none %} hidden{% endif %}>
+            <div class="reading"><span id="outdoor-temperature-f" class="value">{% if average and average.outdoor_temperature_f is not none %}{{ "%.1f"|format(average.outdoor_temperature_f) }}°{% endif %}</span><span id="weather-description" class="label">{% if average and average.outdoor_description %}{{ average.outdoor_description }}{% endif %}</span></div>
+            <div class="reading"><span id="outdoor-humidity-percent" class="value">{% if average and average.outdoor_humidity_percent is not none %}{{ "%.1f"|format(average.outdoor_humidity_percent) }}%{% endif %}</span><span class="label">Relative humidity</span></div>
+        </div>
+        <p id="weather-details" class="details"{% if not average or average.outdoor_temperature_c is none %} hidden{% endif %}>
+            <span id="outdoor-temperature-c">{% if average and average.outdoor_temperature_c is not none %}{{ average.outdoor_temperature_c|round(1) }} °C{% endif %}</span><br>
+            Observed <span id="outdoor-timestamp-utc">{% if average and average.outdoor_timestamp_utc %}{{ average.outdoor_timestamp_utc }} UTC{% endif %}</span> ·
+            <a href="https://open-meteo.com/" rel="external">Weather by Open-Meteo</a>
+        </p>
+    </section>
 </main>
 </body>
 </html>
