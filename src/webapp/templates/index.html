@@ -3,25 +3,23 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="30">
     <title>Climate Monitor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
-<main>
+<main data-average-url="{{ url_for('average_api') }}">
     <h1>AM2302 · GPIO {{ gpio }} · ONE-MINUTE AVERAGE</h1>
-    {% if average %}
-        <section class="readings">
-            <div class="reading"><span class="value">{{ "%.1f"|format(average.temperature_f) }}°</span><span class="label">Fahrenheit</span></div>
-            <div class="reading"><span class="value">{{ "%.1f"|format(average.humidity_percent) }}%</span><span class="label">Relative humidity</span></div>
-        </section>
-        <footer>
-            {{ average.temperature_c|round(1) }} °C · {{ average.sample_count }} samples<br>
-            Minute ending {{ average.timestamp_utc }} UTC
-        </footer>
-    {% else %}
-        <p>Collecting the first minute of samples...</p>
-    {% endif %}
+    <p id="status"{% if average %} hidden{% endif %}>Collecting the first minute of samples...</p>
+    <section id="readings" class="readings"{% if not average %} hidden{% endif %}>
+        <div class="reading"><span id="temperature-f" class="value">{% if average %}{{ "%.1f"|format(average.temperature_f) }}°{% endif %}</span><span class="label">Fahrenheit</span></div>
+        <div class="reading"><span id="humidity-percent" class="value">{% if average %}{{ "%.1f"|format(average.humidity_percent) }}%{% endif %}</span><span class="label">Relative humidity</span></div>
+    </section>
+    <footer id="details"{% if not average %} hidden{% endif %}>
+        <span id="temperature-c">{% if average %}{{ average.temperature_c|round(1) }} °C{% endif %}</span> ·
+        <span id="sample-count">{% if average %}{{ average.sample_count }} samples{% endif %}</span><br>
+        Minute ending <span id="timestamp-utc">{% if average %}{{ average.timestamp_utc }} UTC{% endif %}</span>
+    </footer>
 </main>
 </body>
 </html>
