@@ -25,10 +25,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
+    print(f"Logging to {args.log_file}")
     climate_logger = ClimateLogger(args.log_file)
     sampler = threading.Thread(
         target=climate_logger.run,
@@ -45,6 +46,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, stop)
 
     try:
+        print("Starting climate logger web server...")
         create_app(climate_logger).run(
             host=args.host,
             port=args.port,

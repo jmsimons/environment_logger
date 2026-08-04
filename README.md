@@ -1,8 +1,8 @@
 # Climate Logger
 
-Reads an AM2302/DHT22 sensor every five seconds, records a non-overlapping
-one-minute temperature and humidity average in CSV, and serves the latest
-average through Flask.
+Reads an AM2302/DHT22 sensor every five seconds, retrying failed readings every
+two seconds, records a non-overlapping one-minute temperature and humidity
+average in CSV, and serves the latest average through Flask.
 
 ## Wiring
 

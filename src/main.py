@@ -27,6 +27,7 @@ from typing import Any
 
 SENSOR_GPIO = 4
 SAMPLE_INTERVAL_SECONDS = 5.0
+RETRY_INTERVAL_SECONDS = 2.0
 AVERAGE_INTERVAL_SECONDS = 60.0
 DEFAULT_LOG_PATH = Path(__file__).with_name("climate_log.csv")
 
@@ -65,12 +66,14 @@ class ClimateLogger:
         interval_end = time.monotonic() + AVERAGE_INTERVAL_SECONDS
 
         while not self.stop_event.is_set():
+            sample_succeeded = False
             try:
                 temperature = self.sensor.temperature
                 humidity = self.sensor.humidity
                 if temperature is not None and humidity is not None:
                     temperatures.append(float(temperature))
                     humidities.append(float(humidity))
+                    sample_succeeded = True
             except RuntimeError as error:
                 logging.debug("Transient AM2302 read failure: %s", error)
             except Exception:
@@ -96,7 +99,12 @@ class ClimateLogger:
                 humidities.clear()
                 interval_end = now + AVERAGE_INTERVAL_SECONDS
 
-            self.stop_event.wait(SAMPLE_INTERVAL_SECONDS)
+            wait_seconds = (
+                SAMPLE_INTERVAL_SECONDS
+                if sample_succeeded
+                else RETRY_INTERVAL_SECONDS
+            )
+            self.stop_event.wait(wait_seconds)
 
     def get_latest_average(self) -> ClimateAverage | None:
         with self.lock:
