@@ -2,15 +2,14 @@ const POLL_INTERVAL_MS = 10_000;
 
 const page = document.querySelector("[data-average-url]");
 const status = document.querySelector("#status");
-const readings = document.querySelector("#readings");
-const details = document.querySelector("#details");
+const sensor = document.querySelector("#sensor");
+const sensorDetails = document.querySelector("#sensor-details");
 const temperatureF = document.querySelector("#temperature-f");
 const humidityPercent = document.querySelector("#humidity-percent");
 const temperatureC = document.querySelector("#temperature-c");
 const sampleCount = document.querySelector("#sample-count");
 const timestampLocal = document.querySelector("#timestamp-local");
 const weatherStatus = document.querySelector("#weather-status");
-const weatherReadings = document.querySelector("#weather-readings");
 const weatherDetails = document.querySelector("#weather-details");
 const outdoorTemperatureF = document.querySelector("#outdoor-temperature-f");
 const outdoorHumidityPercent = document.querySelector("#outdoor-humidity-percent");
@@ -46,16 +45,18 @@ function showAverage(average) {
     showLocalTime(timestampLocal, average.timestamp_utc);
 
     status.hidden = true;
-    readings.hidden = false;
-    details.hidden = false;
+    sensor.hidden = false;
+    sensorDetails.hidden = false;
 
     showWeather(average);
 }
 
 function showWeather(average) {
     if (average.outdoor_temperature_f === null) {
+        outdoorTemperatureF.textContent = "--°";
+        outdoorHumidityPercent.textContent = "--%";
+        weatherDescription.textContent = "Unavailable";
         weatherStatus.hidden = false;
-        weatherReadings.hidden = true;
         weatherDetails.hidden = true;
         return;
     }
@@ -67,7 +68,6 @@ function showWeather(average) {
     weatherDescription.textContent = average.outdoor_description;
 
     weatherStatus.hidden = true;
-    weatherReadings.hidden = false;
     weatherDetails.hidden = false;
 }
 
@@ -84,7 +84,7 @@ async function pollAverage() {
         });
 
         if (response.status === 503) {
-            if (readings.hidden) {
+            if (sensor.hidden) {
                 status.textContent = "Collecting the first minute of samples...";
                 status.hidden = false;
             }
@@ -98,7 +98,7 @@ async function pollAverage() {
         showAverage(await response.json());
     } catch (error) {
         console.error("Unable to update climate readings", error);
-        if (readings.hidden) {
+        if (sensor.hidden) {
             status.textContent = "Unable to load climate readings.";
             status.hidden = false;
         }

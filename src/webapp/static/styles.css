@@ -48,7 +48,6 @@ h2 {
 }
 
 .label,
-footer,
 .details {
     color: #aebbb3;
 }
@@ -58,7 +57,6 @@ footer,
     margin-top: .75rem;
 }
 
-footer,
 .details {
     margin-top: 1.5rem;
     font-size: .8rem;
@@ -71,8 +69,10 @@ footer,
     border-top: 1px solid #54635b;
 }
 
-.weather .details {
-    margin-bottom: 0;
+.weather > h2,
+.weather > #weather-status,
+.weather > .details {
+    grid-column: 1 / -1;
 }
 
 a {
