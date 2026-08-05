@@ -69,9 +69,9 @@ h2 {
     border-top: 1px solid #54635b;
 }
 
-.weather > h2,
-.weather > #weather-status,
-.weather > .details {
+.readings > h2,
+.readings > p,
+.readings > .details {
     grid-column: 1 / -1;
 }
 
