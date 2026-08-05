@@ -4,7 +4,8 @@ from dataclasses import asdict
 
 from flask import jsonify, render_template
 
-from src.main import SENSOR_GPIO, ClimateLogger
+from src.main import ClimateLogger
+from src.sensor import SENSOR_GPIO
 from . import app
 
 

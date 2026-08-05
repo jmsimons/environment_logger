@@ -8,24 +8,42 @@ const temperatureF = document.querySelector("#temperature-f");
 const humidityPercent = document.querySelector("#humidity-percent");
 const temperatureC = document.querySelector("#temperature-c");
 const sampleCount = document.querySelector("#sample-count");
-const timestampUtc = document.querySelector("#timestamp-utc");
+const timestampLocal = document.querySelector("#timestamp-local");
 const weatherStatus = document.querySelector("#weather-status");
 const weatherReadings = document.querySelector("#weather-readings");
 const weatherDetails = document.querySelector("#weather-details");
 const outdoorTemperatureF = document.querySelector("#outdoor-temperature-f");
 const outdoorHumidityPercent = document.querySelector("#outdoor-humidity-percent");
 const outdoorTemperatureC = document.querySelector("#outdoor-temperature-c");
-const outdoorTimestampUtc = document.querySelector("#outdoor-timestamp-utc");
+const outdoorTimestampLocal = document.querySelector("#outdoor-timestamp-local");
 const weatherDescription = document.querySelector("#weather-description");
 
+const localTimeFormatter = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short",
+});
+
 let requestInFlight = false;
+
+function showLocalTime(element, timestamp) {
+    const date = new Date(timestamp);
+    element.dateTime = timestamp;
+    element.textContent = Number.isNaN(date.getTime())
+        ? timestamp
+        : localTimeFormatter.format(date);
+}
 
 function showAverage(average) {
     temperatureF.textContent = `${Number(average.temperature_f).toFixed(1)}°`;
     humidityPercent.textContent = `${Number(average.humidity_percent).toFixed(1)}%`;
     temperatureC.textContent = `${Number(average.temperature_c).toFixed(1)} °C`;
     sampleCount.textContent = `${average.sample_count} samples`;
-    timestampUtc.textContent = `${average.timestamp_utc} UTC`;
+    showLocalTime(timestampLocal, average.timestamp_utc);
 
     status.hidden = true;
     readings.hidden = false;
@@ -45,7 +63,7 @@ function showWeather(average) {
     outdoorTemperatureF.textContent = `${Number(average.outdoor_temperature_f).toFixed(1)}°`;
     outdoorHumidityPercent.textContent = `${Number(average.outdoor_humidity_percent).toFixed(1)}%`;
     outdoorTemperatureC.textContent = `${Number(average.outdoor_temperature_c).toFixed(1)} °C`;
-    outdoorTimestampUtc.textContent = `${average.outdoor_timestamp_utc} UTC`;
+    showLocalTime(outdoorTimestampLocal, average.outdoor_timestamp_utc);
     weatherDescription.textContent = average.outdoor_description;
 
     weatherStatus.hidden = true;
@@ -87,6 +105,13 @@ async function pollAverage() {
     } finally {
         requestInFlight = false;
     }
+}
+
+if (timestampLocal.dateTime) {
+    showLocalTime(timestampLocal, timestampLocal.dateTime);
+}
+if (outdoorTimestampLocal.dateTime) {
+    showLocalTime(outdoorTimestampLocal, outdoorTimestampLocal.dateTime);
 }
 
 pollAverage();

@@ -20,17 +20,16 @@ import threading
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from importlib import import_module
 from pathlib import Path
-from typing import Any
 
+from .sensor import SensorReader
 from .weather import WeatherClient, WeatherReading
 
 
-SENSOR_GPIO = 4
 SAMPLE_INTERVAL_SECONDS = 5.0
 RETRY_INTERVAL_SECONDS = 2.0
 AVERAGE_INTERVAL_SECONDS = 60.0
+WEATHER_INTERVAL_SECONDS = 15.0 * 60.0
 DEFAULT_LOG_PATH = Path(__file__).with_name("climate_log.csv")
 
 
@@ -56,25 +55,17 @@ class ClimateLogger:
         self,
         log_path: Path,
         weather_client: WeatherClient | None = None,
+        sensor_reader: SensorReader | None = None,
     ) -> None:
         self.log_path = log_path
         self.weather_client = weather_client or WeatherClient()
         self.latest_weather: WeatherReading | None = None
-        try:
-            adafruit_dht = import_module("adafruit_dht")
-            board = import_module("board")
-        except ModuleNotFoundError as error:
-            raise RuntimeError(
-                "AM2302 support requires the adafruit-circuitpython-dht package "
-                "and its Raspberry Pi GPIO dependencies"
-            ) from error
-
-        self.sensor: Any = adafruit_dht.DHT22(board.D4, use_pulseio=False)
+        self.sensor_reader = sensor_reader or SensorReader()
         self.latest_average: ClimateAverage | None = None
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
 
-    def run(self) -> None:
+    def run_sensor(self) -> None:
         temperatures: list[float] = []
         humidities: list[float] = []
         interval_end = time.monotonic() + AVERAGE_INTERVAL_SECONDS
@@ -82,11 +73,10 @@ class ClimateLogger:
         while not self.stop_event.is_set():
             sample_succeeded = False
             try:
-                temperature = self.sensor.temperature
-                humidity = self.sensor.humidity
-                if temperature is not None and humidity is not None:
-                    temperatures.append(float(temperature))
-                    humidities.append(float(humidity))
+                reading = self.sensor_reader.fetch()
+                if reading is not None:
+                    temperatures.append(reading.temperature_c)
+                    humidities.append(reading.humidity_percent)
                     sample_succeeded = True
             except RuntimeError as error:
                 logging.debug("Transient AM2302 read failure: %s", error)
@@ -96,7 +86,8 @@ class ClimateLogger:
             now = time.monotonic()
             if now >= interval_end:
                 if temperatures and humidities:
-                    weather = self._fetch_weather()
+                    with self.lock:
+                        weather = self.latest_weather
                     average = self._build_average(
                         temperatures,
                         humidities,
@@ -111,13 +102,6 @@ class ClimateLogger:
                         average.humidity_percent,
                         average.sample_count,
                     )
-                    if weather is not None:
-                        logging.info(
-                            "Local weather: %.1f F, %.1f%% RH, %s",
-                            weather.temperature_f,
-                            weather.humidity_percent,
-                            weather.description,
-                        )
                 else:
                     logging.warning("No valid AM2302 samples collected this minute")
 
@@ -132,6 +116,23 @@ class ClimateLogger:
             )
             self.stop_event.wait(wait_seconds)
 
+    def run_weather(self) -> None:
+        while not self.stop_event.is_set():
+            try:
+                weather = self.weather_client.fetch()
+                with self.lock:
+                    self.latest_weather = weather
+                logging.info(
+                    "Local weather: %.1f F, %.1f%% RH, %s",
+                    weather.temperature_f,
+                    weather.humidity_percent,
+                    weather.description,
+                )
+            except Exception as error:
+                logging.warning("Unable to fetch local weather: %s", error)
+
+            self.stop_event.wait(WEATHER_INTERVAL_SECONDS)
+
     def get_latest_average(self) -> ClimateAverage | None:
         with self.lock:
             return self.latest_average
@@ -141,14 +142,7 @@ class ClimateLogger:
 
     def close(self) -> None:
         self.stop()
-        self.sensor.exit()
-
-    def _fetch_weather(self) -> WeatherReading | None:
-        try:
-            self.latest_weather = self.weather_client.fetch()
-        except Exception as error:
-            logging.warning("Unable to fetch local weather: %s", error)
-        return self.latest_weather
+        self.sensor_reader.close()
 
     @staticmethod
     def _build_average(

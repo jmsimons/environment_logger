@@ -28,11 +28,17 @@ def main() -> None:
     print(f"Logging to {args.log_file}")
     climate_logger = ClimateLogger(args.log_file)
     app.config["CLIMATE_LOGGER"] = climate_logger
+    weather_updater = threading.Thread(
+        target=climate_logger.run_weather,
+        name="weather-updater",
+        daemon=True,
+    )
     sampler = threading.Thread(
-        target=climate_logger.run,
+        target=climate_logger.run_sensor,
         name="am2302-sampler",
         daemon=True,
     )
+    weather_updater.start()
     sampler.start()
 
     def stop(_signal_number, _frame) -> None:
@@ -53,6 +59,9 @@ def main() -> None:
     finally:
         climate_logger.stop()
         sampler.join(timeout=SAMPLE_INTERVAL_SECONDS + 1.0)
+        weather_updater.join(
+            timeout=climate_logger.weather_client.timeout_seconds + 1.0
+        )
         climate_logger.close()
 
 

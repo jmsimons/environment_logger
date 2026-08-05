@@ -6,10 +6,10 @@ average in CSV, adds current local weather, and serves the latest record through
 Flask.
 
 Local weather comes from Open-Meteo for `32.924637745862825,
--117.16058117149171`. The application fetches current outdoor temperature,
-humidity, and conditions when each one-minute sensor average is completed. If a
-request fails, the most recent successful weather observation is reused so
-indoor logging continues.
+-117.16058117149171`. A lightweight background thread fetches current outdoor
+temperature, humidity, and conditions at startup and every 15 minutes. Each
+one-minute sensor average uses the most recent weather observation. If a request
+fails, the last successful observation is retained so indoor logging continues.
 
 ## Wiring
 
