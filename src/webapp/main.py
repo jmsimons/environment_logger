@@ -5,7 +5,6 @@ from dataclasses import asdict
 from flask import jsonify, render_template
 
 from src.main import ClimateLogger
-from src.sensor import SENSOR_GPIO
 from . import app
 
 
@@ -15,11 +14,7 @@ def _get_climate_logger() -> ClimateLogger:
 
 @app.get("/")
 def index():
-    return render_template(
-        "index.html",
-        average=_get_climate_logger().get_latest_average(),
-        gpio=SENSOR_GPIO,
-    )
+    return render_template("index.html")
 
 
 @app.get("/api/average")

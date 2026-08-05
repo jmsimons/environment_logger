@@ -10,18 +10,18 @@
 <body>
     <main data-average-url="{{ url_for('average_api') }}">
         <h1>Climate Logger</h1>
-        <p id="status"{% if average %} hidden{% endif %}>Collecting the first minute of samples...</p>
+        <p id="status">Collecting the first minute of samples...</p>
         
-        <section id="sensor" class="readings"{% if not average %} hidden{% endif %}>
+        <section id="sensor" class="readings" hidden>
             <h2>Temperature & Humidity Sensor · AM2302</h2>
 
-            <div class="reading"><span id="temperature-f" class="value">{% if average %}{{ "%.1f"|format(average.temperature_f) }}°{% endif %}</span><span class="label">Fahrenheit</span></div>
-            <div class="reading"><span id="humidity-percent" class="value">{% if average %}{{ "%.1f"|format(average.humidity_percent) }}%{% endif %}</span><span class="label">Relative humidity</span></div>
+            <div class="reading"><span id="temperature-f" class="value">--°</span><span class="label">Fahrenheit</span></div>
+            <div class="reading"><span id="humidity-percent" class="value">--%</span><span class="label">Relative humidity</span></div>
             
-            <footer id="sensor-details" class="details"{% if not average %} hidden{% endif %}>
-                <span id="temperature-c">{% if average %}{{ average.temperature_c|round(1) }} °C{% endif %}</span> ·
-                <span id="sample-count">{% if average %}{{ average.sample_count }} samples{% endif %}</span><br>
-                Observed <time id="timestamp-local"{% if average %} datetime="{{ average.timestamp_utc }}"{% endif %}>{% if average %}{{ average.timestamp_utc }} UTC{% endif %}</time>
+            <footer id="sensor-details" class="details" hidden>
+                <span id="temperature-c"></span> ·
+                <span id="sample-count"></span><br>
+                Observed <time id="timestamp-local"></time>
             </footer>
         </section>
         
@@ -29,13 +29,13 @@
         <section class="readings weather">
             <h2>LOCAL WEATHER</h2>
 
-            <p id="weather-status"{% if average and average.outdoor_temperature_f is not none %} hidden{% endif %}>Local weather unavailable.</p>
-            <div class="reading"><span id="outdoor-temperature-f" class="value">{% if average and average.outdoor_temperature_f is not none %}{{ "%.1f"|format(average.outdoor_temperature_f) }}°{% else %}--°{% endif %}</span><span id="weather-description" class="label">{% if average and average.outdoor_description %}{{ average.outdoor_description }}{% else %}Unavailable{% endif %}</span></div>
-            <div class="reading"><span id="outdoor-humidity-percent" class="value">{% if average and average.outdoor_humidity_percent is not none %}{{ "%.1f"|format(average.outdoor_humidity_percent) }}%{% else %}--%{% endif %}</span><span class="label">Relative humidity</span></div>
+            <p id="weather-status">Local weather unavailable.</p>
+            <div class="reading"><span id="outdoor-temperature-f" class="value">--°</span><span id="weather-description" class="label">Unavailable</span></div>
+            <div class="reading"><span id="outdoor-humidity-percent" class="value">--%</span><span class="label">Relative humidity</span></div>
             
-            <footer id="weather-details" class="details"{% if not average or average.outdoor_temperature_c is none %} hidden{% endif %}>
-                <span id="outdoor-temperature-c">{% if average and average.outdoor_temperature_c is not none %}{{ average.outdoor_temperature_c|round(1) }} °C{% endif %}</span><br>
-                Observed <time id="outdoor-timestamp-local"{% if average and average.outdoor_timestamp_utc %} datetime="{{ average.outdoor_timestamp_utc }}"{% endif %}>{% if average and average.outdoor_timestamp_utc %}{{ average.outdoor_timestamp_utc }} UTC{% endif %}</time> ·
+            <footer id="weather-details" class="details" hidden>
+                <span id="outdoor-temperature-c"></span><br>
+                Observed <time id="outdoor-timestamp-local"></time> ·
                 <a href="https://open-meteo.com/" rel="external">Weather by Open-Meteo</a>
             </footer>
         </section>
