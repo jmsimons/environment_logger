@@ -85,7 +85,7 @@ async function pollAverage() {
 
         if (response.status === 503) {
             if (sensor.hidden) {
-                status.textContent = "Waiting for sensor 0 readings...";
+                status.textContent = "Waiting for sensor readings...";
                 status.hidden = false;
             }
             return;

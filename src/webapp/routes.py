@@ -5,11 +5,11 @@ from math import isfinite
 
 from flask import Response, jsonify, render_template, request
 
-from src import RUNTIME_LOG_PATH
+from src import DEFAULT_SENSOR_ID, RUNTIME_LOG_PATH
 from . import app, db
 
 
-AVERAGE_SENSOR_ID = 0
+AVERAGE_SENSOR_ID = DEFAULT_SENSOR_ID
 
 
 @app.get("/")
