@@ -10,10 +10,10 @@
 <body>
     <main data-average-url="{{ url_for('average_api') }}">
         <h1>Climate Logger</h1>
-        <p id="status">Waiting for sensor readings...</p>
-        
-        <section id="sensor" class="readings" hidden>
+
+        <section id="sensor" class="readings">
             <h2>Temperature & Humidity Sensor · AM2302</h2>
+            <p id="status">Waiting for sensor readings...</p>
 
             <div class="reading"><span id="temperature-f" class="value">--°</span><span class="label">Fahrenheit</span></div>
             <div class="reading"><span id="humidity-percent" class="value">--%</span><span class="label">Relative humidity</span></div>
@@ -27,7 +27,7 @@
         
         
         <section class="readings weather">
-            <h2>LOCAL WEATHER</h2>
+            <h2>Local Weather</h2>
 
             <p id="weather-status">Local weather unavailable.</p>
             <div class="reading"><span id="outdoor-temperature-f" class="value">--°</span><span id="weather-description" class="label">Unavailable</span></div>

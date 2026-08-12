@@ -84,7 +84,7 @@ async function pollAverage() {
         });
 
         if (response.status === 503) {
-            if (sensor.hidden) {
+            if (sensorDetails.hidden) {
                 status.textContent = "Waiting for sensor readings...";
                 status.hidden = false;
             }
@@ -98,7 +98,7 @@ async function pollAverage() {
         showAverage(await response.json());
     } catch (error) {
         console.error("Unable to update climate readings", error);
-        if (sensor.hidden) {
+        if (sensorDetails.hidden) {
             status.textContent = "Unable to load climate readings.";
             status.hidden = false;
         }
