@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sensor Reading History · Climate Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <main class="history-main">
+        <header class="history-header">
+            <div>
+                <a class="back-link" href="{{ url_for('index') }}">← Climate Logger</a>
+                <h1>Sensor Reading History</h1>
+            </div>
+            <p>{{ readings|length }} reading{% if readings|length != 1 %}s{% endif %} · Oldest first</p>
+        </header>
+
+        {% if readings %}
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Sensor</th>
+                        <th scope="col">Observed</th>
+                        <th class="numeric" scope="col">Samples</th>
+                        <th class="numeric" scope="col">Temperature</th>
+                        <th class="numeric" scope="col">Humidity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in readings %}
+                    <tr>
+                        <td>{{ reading.id }}</td>
+                        <td>#{{ reading.sensor_id }}</td>
+                        <td><time datetime="{{ reading.timestamp_iso }}">{{ reading.timestamp_display }}</time></td>
+                        <td class="numeric">{{ reading.num_readings }}</td>
+                        <td class="numeric">{{ "%.1f"|format(reading.temperature_c) }} °C</td>
+                        <td class="numeric">{{ "%.1f"|format(reading.humidity_percent) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No sensor readings have been recorded.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

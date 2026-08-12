@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Log one-minute AM2302 climate averages and serve the latest reading.
+"""Collect AM2302 climate readings and serve the latest average.
 
 Raspberry Pi wiring (BCM numbering):
     AM2302 VCC  -> 3.3 V (physical pin 1)
@@ -14,14 +14,12 @@ The libgpiod system package may also be required by Blinka on Raspberry Pi OS.
 
 from __future__ import annotations
 
-import csv
 import logging
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
-
+from src.database import db
 from .sensor import SensorReader
 from .weather import WeatherClient, WeatherReading
 
@@ -30,7 +28,7 @@ SAMPLE_INTERVAL_SECONDS = 5.0
 RETRY_INTERVAL_SECONDS = 2.0
 AVERAGE_INTERVAL_SECONDS = 60.0
 WEATHER_INTERVAL_SECONDS = 15.0 * 60.0
-DEFAULT_LOG_PATH = Path(__file__).with_name("climate_log.csv")
+DEFAULT_SENSOR_ID = 1
 
 
 @dataclass(frozen=True)
@@ -49,18 +47,16 @@ class ClimateAverage:
 
 
 class ClimateLogger:
-    """Sample an AM2302 and persist one average for each completed minute."""
+    """Sample an AM2302 and calculate one average for each completed minute."""
 
     def __init__(
         self,
-        log_path: Path,
         weather_client: WeatherClient | None = None,
         sensor_reader: SensorReader | None = None,
     ) -> None:
-        self.log_path = log_path
         self.weather_client = weather_client or WeatherClient()
         self.latest_weather: WeatherReading | None = None
-        self.sensor_reader = sensor_reader or SensorReader()
+        self.sensor_reader = sensor_reader or SensorReader(DEFAULT_SENSOR_ID)
         self.latest_average: ClimateAverage | None = None
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
@@ -93,13 +89,11 @@ class ClimateLogger:
                         humidities,
                         weather,
                     )
-                    self._append_average(average)
+                    self._append_sensor_average(average)
                     with self.lock:
                         self.latest_average = average
                     logging.info(
-                        "Minute average: %.1f F, %.1f%% RH (%d samples)",
-                        average.temperature_f,
-                        average.humidity_percent,
+                        "Minute average updated from %d samples",
                         average.sample_count,
                     )
                 else:
@@ -122,11 +116,9 @@ class ClimateLogger:
                 weather = self.weather_client.fetch()
                 with self.lock:
                     self.latest_weather = weather
+                self._append_weather_reading(weather)
                 logging.info(
-                    "Local weather: %.1f F, %.1f%% RH, %s",
-                    weather.temperature_f,
-                    weather.humidity_percent,
-                    weather.description,
+                    "Local weather updated: %s", weather.description
                 )
             except Exception as error:
                 logging.warning("Unable to fetch local weather: %s", error)
@@ -166,29 +158,28 @@ class ClimateLogger:
             outdoor_description=(weather.description if weather else None),
         )
 
-    def _append_average(self, average: ClimateAverage) -> None:
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        write_header = not self.log_path.exists() or self.log_path.stat().st_size == 0
-        fieldnames = list(asdict(average))
-        if not write_header:
-            self._upgrade_log_schema(fieldnames)
-        with self.log_path.open("a", newline="", encoding="utf-8") as log_file:
-            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
-            if write_header:
-                writer.writeheader()
-            writer.writerow(asdict(average))
+    def _append_sensor_average(self, average: ClimateAverage) -> None:
+        try:
+            db.create_sensor_reading(
+                sensor_id=self.sensor_reader.sensor_id,
+                timestamp_utc=int(datetime.fromisoformat(average.timestamp_utc).timestamp()),
+                temperature_c=average.temperature_c,
+                humidity_percent=average.humidity_percent,
+                num_readings=average.sample_count,
+            )
+        except Exception:
+            logging.exception("Unable to persist sensor average")
 
-    def _upgrade_log_schema(self, fieldnames: list[str]) -> None:
-        with self.log_path.open(newline="", encoding="utf-8") as log_file:
-            reader = csv.DictReader(log_file)
-            if reader.fieldnames == fieldnames:
-                return
-            rows = list(reader)
-
-        temporary_path = self.log_path.with_suffix(f"{self.log_path.suffix}.tmp")
-        with temporary_path.open("w", newline="", encoding="utf-8") as log_file:
-            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in rows:
-                writer.writerow({field: row.get(field, "") for field in fieldnames})
-        temporary_path.replace(self.log_path)
+    @staticmethod
+    def _append_weather_reading(reading: WeatherReading) -> None:
+        try:
+            timestamp_utc = int(datetime.fromisoformat(reading.timestamp_utc).timestamp())
+            db.create_weather_reading(
+                timestamp_utc=timestamp_utc,
+                temperature_c=reading.temperature_c,
+                temperature_f=reading.temperature_f,
+                humidity_percent=reading.humidity_percent,
+                description=reading.description,
+            )
+        except Exception:
+            logging.exception("Unable to persist weather reading")

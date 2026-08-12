@@ -41,7 +41,7 @@ function showAverage(average) {
     temperatureF.textContent = `${Number(average.temperature_f).toFixed(1)}°`;
     humidityPercent.textContent = `${Number(average.humidity_percent).toFixed(1)}%`;
     temperatureC.textContent = `${Number(average.temperature_c).toFixed(1)} °C`;
-    sampleCount.textContent = `${average.sample_count} samples`;
+    sampleCount.textContent = `${average.num_readings} samples`;
     showLocalTime(timestampLocal, average.timestamp_utc);
 
     status.hidden = true;
@@ -85,7 +85,7 @@ async function pollAverage() {
 
         if (response.status === 503) {
             if (sensor.hidden) {
-                status.textContent = "Collecting the first minute of samples...";
+                status.textContent = "Waiting for sensor 0 readings...";
                 status.hidden = false;
             }
             return;

@@ -19,7 +19,8 @@ class SensorReading:
 class SensorReader:
     """Own the AM2302 hardware and retrieve paired sensor readings."""
 
-    def __init__(self) -> None:
+    def __init__(self, sensor_id: int) -> None:
+        self.sensor_id = sensor_id
         try:
             adafruit_dht = import_module("adafruit_dht")
             board = import_module("board")

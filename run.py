@@ -1,33 +1,34 @@
-
 #!/usr/bin/env python3
 """Run the climate logger from the project root."""
 
 import argparse
 import signal
 import threading
-from pathlib import Path
 
-from src import ClimateLogger
-from src.main import DEFAULT_LOG_PATH, SAMPLE_INTERVAL_SECONDS
-from src.webapp import app
+from src import (
+    DEFAULT_SENSOR_ID,
+    SAMPLE_INTERVAL_SECONDS,
+    ClimateLogger,
+    db,
+    app,
+)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Log AM2302 one-minute averages and serve them over HTTP."
+        description="Store AM2302 readings and serve climate data over HTTP."
     )
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", default=5000, type=int)
-    parser.add_argument("--log-file", default=DEFAULT_LOG_PATH, type=Path)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
 
-    print(f"Logging to {args.log_file}")
-    climate_logger = ClimateLogger(args.log_file)
-    app.config["CLIMATE_LOGGER"] = climate_logger
+    db.get_sensor_by_id(DEFAULT_SENSOR_ID)
+
+    climate_logger = ClimateLogger()
     weather_updater = threading.Thread(
         target=climate_logger.run_weather,
         name="weather-updater",

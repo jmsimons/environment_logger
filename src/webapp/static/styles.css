@@ -14,12 +14,12 @@ body {
 
 main {
     width: min(38rem, calc(100% - 2rem));
-    border-top: 4px solid #e6b85c;
     padding: 2rem 0;
 }
 
 h1 {
     margin: 0 0 2rem;
+    border-bottom: 4px solid #e6b85c;
     font: 600 1.1rem/1 sans-serif;
     letter-spacing: 0;
 }
@@ -79,8 +79,99 @@ a {
     color: inherit;
 }
 
+.page-nav {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #54635b;
+    font-size: .85rem;
+}
+
+.history-main {
+    width: min(68rem, calc(100% - 2rem));
+}
+
+.history-header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 4px solid #e6b85c;
+}
+
+.history-header h1 {
+    margin: .5rem 0 0;
+    border: 0;
+}
+
+.history-header p {
+    margin: 0 0 .5rem;
+    color: #aebbb3;
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.back-link {
+    color: #aebbb3;
+    font-size: .8rem;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    border: 1px solid #54635b;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+    white-space: nowrap;
+}
+
+th,
+td {
+    padding: .8rem 1rem;
+    border-bottom: 1px solid #3b4942;
+    text-align: left;
+}
+
+th {
+    background: #22302a;
+    color: #aebbb3;
+    font: 600 .75rem/1 sans-serif;
+    text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+tbody tr:nth-child(even) {
+    background: #1d2924;
+}
+
+.numeric {
+    text-align: right;
+}
+
+.empty-state {
+    padding: 2rem;
+    border: 1px solid #54635b;
+    color: #aebbb3;
+    text-align: center;
+}
+
 @media (max-width: 32rem) {
     .readings {
         grid-template-columns: 1fr;
+    }
+
+    .history-header {
+        display: block;
+    }
+
+    .history-header p {
+        margin-top: .75rem;
+        white-space: normal;
     }
 }

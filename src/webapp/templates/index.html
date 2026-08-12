@@ -10,7 +10,7 @@
 <body>
     <main data-average-url="{{ url_for('average_api') }}">
         <h1>Climate Logger</h1>
-        <p id="status">Collecting the first minute of samples...</p>
+        <p id="status">Waiting for sensor 0 readings...</p>
         
         <section id="sensor" class="readings" hidden>
             <h2>Temperature & Humidity Sensor · AM2302</h2>
@@ -19,7 +19,7 @@
             <div class="reading"><span id="humidity-percent" class="value">--%</span><span class="label">Relative humidity</span></div>
             
             <footer id="sensor-details" class="details" hidden>
-                <span id="temperature-c"></span> ·
+                <span id="temperature-c"></span>
                 <span id="sample-count"></span><br>
                 Observed <time id="timestamp-local"></time>
             </footer>
@@ -39,6 +39,11 @@
                 <a href="https://open-meteo.com/" rel="external">Weather by Open-Meteo</a>
             </footer>
         </section>
+
+        <nav class="page-nav" aria-label="Climate logger views">
+            <a href="{{ url_for('sensor_readings') }}">Sensor reading history</a> ·
+            <a href="{{ url_for('runtime_log') }}">Runtime log</a>
+        </nav>
     </main>
 </body>
 </html>
